@@ -1,0 +1,82 @@
+#!/bin/bash
+#### 程式所在位置 prereleasedb //data/scripts/backup_db.sh
+
+# 设置备份目录和当前日期时间
+backup_dir="/data/backup"
+nowtime=$(date +%Y-%m-%d_%H-%M-%S)
+
+# 数据库连接详情
+dbHost="gxxx.rds.amazonaws.com"
+dbUserName="admin"
+dbPasswd="xxxxxxxxxxxxxxx3"
+dbName="dbnane"
+
+# 创建带有当前日期时间的唯一备份文件名
+dbDumpFile="$backup_dir/goplay_game_$nowtime.sql"
+gzippedDumpFile="$dbDumpFile.gz"
+
+# 日志文件
+Daytime=$(date +%Y-%m-%d)
+logFile="$backup_dir/backup_log_$Daytime.txt"
+
+# 切换到备份目录
+cd "$backup_dir" || exit 1
+
+# 使用 mysqldump 创建指定数据库的备份，并使用 gzip 进行压缩
+if /bin/mysqldump -h "$dbHost" -q -R -u"$dbUserName" -p"$dbPasswd" --databases "$dbName" > "$dbDumpFile"; then
+    nowtime=$(date +%Y-%m-%d_%H-%M-%S)
+    echo "$nowtime 备份成功: $gzippedDumpFile" | tee -a "$logFile"
+else
+    nowtime=$(date +%Y-%m-%d_%H-%M-%S)
+    echo "$nowtime 错误: 数据库备份失败。" | tee -a "$logFile"
+    exit 1
+fi
+
+# 删除旧的备份文件，仅保留最近的 5 个备份文件
+if /bin/find "$backup_dir" -name "goplay_game_*.sql.gz" -mtime +0.5 -type f -print -delete; then
+    nowtime=$(date +%Y-%m-%d_%H-%M-%S)
+    echo "$nowtime 旧备份文件删除成功。" | tee -a "$logFile"
+else
+    nowtime=$(date +%Y-%m-%d_%H-%M-%S)
+    echo "$nowtime 警告: 无法删除旧备份文件。" | tee -a "$logFile"
+fi
+
+# 提取时间戳并将其用作新数据库名的一部分
+timestamp=$(echo "$nowtime" | tr -d '_-')
+newDbName="goplay_games_backup_$timestamp"
+
+# 创建新数据库
+if /bin/mysql -h localhost  -e "CREATE DATABASE IF NOT EXISTS $newDbName"; then
+    nowtime=$(date +%Y-%m-%d_%H-%M-%S)
+    echo "$nowtime 新数据库 $newDbName 创建成功。" | tee -a "$logFile"
+else
+    nowtime=$(date +%Y-%m-%d_%H-%M-%S)
+    echo "$nowtime 错误: 无法创建新数据库 $newDbName。" | tee -a "$logFile"
+    exit 1
+fi
+
+# 导入备份到新数据库
+#if  /bin/mysql -h localhost -e  "use $newDbName; source $dbDumpFile;"  ; then
+if /bin/mysql -h localhost "$newDbName" < "$dbDumpFile"; then
+    echo "备份成功导入到新数据库 $newDbName。" | tee -a "$logFile"
+else
+    nowtime=$(date +%Y-%m-%d_%H-%M-%S)
+    echo "$nowtime 错误: 导入备份到新数据库失败。" | tee -a "$logFile"
+    exit 1
+fi
+
+# 删除最近导入的 5 个备份数据库
+recent_backups=$(/bin/mysql -h localhost -e "SHOW DATABASES LIKE 'goplay_games_backup_%'" | grep "goplay_games_backup_" | sort -r| grep -v "("  | tail -n +6)
+if [ -n "$recent_backups" ]; then
+    for db in $recent_backups; do
+        /bin/mysql -h localhost  -e "DROP DATABASE $db"
+        echo "数据库 $db 删除成功。" | tee -a "$logFile"
+    done
+else
+    echo "警告: 无法删除最近导入的 5 个备份数据库。" | tee -a "$logFile"
+fi
+
+# 压缩数据备份文件
+/bin/gzip "$dbDumpFile"
+nowtime=$(date +%Y-%m-%d_%H-%M-%S)
+echo "$nowtime 备份文件压缩成功: $gzippedDumpFile" | tee -a "$logFile"
