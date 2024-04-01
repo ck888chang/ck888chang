@@ -79,7 +79,7 @@ def get_ip():
         checkvpnconfig()
 
 def cmysql():
-    conn = pymysql.connect(host="localhost", port=3306, user="root", passwd="7taw996d", db="testdb")
+    conn = pymysql.connect(host="localhost", port=3306, user="root", passwd="7", db="testdb")
     cur = conn.cursor()
     cur.execute("SELECT * FROM testdb.test limit 20;")
     print(cur.description)
@@ -134,8 +134,8 @@ def read_csv_to_mysql(filename):
         conn.close()
 
 def get_conn():
-    conn = pymysql.connect(host='localhost', port=3306, user='root', passwd='7taw996d', db='testdb', charset='utf8',compress=None)
-    #conn = pymysql.connect(host='database-1.ckht8fbw26hy.ap-northeast-1.rds.amazonaws.com', port=3306, user='admin', passwd='7taw996d', db='innodb', charset='utf8',compress=None)
+    conn = pymysql.connect(host='localhost', port=3306, user='root', passwd='7tad', db='testdb', charset='utf8',compress=None)
+    #conn = pymysql.connect(host='database-1.ckht8fbw26hy.ap-northeast-1.rds.amazonaws.com', port=3306, user='admin', passwd='7t6d', db='innodb', charset='utf8',compress=None)
     return conn
 
 def insert(cur, sql, args):
@@ -158,7 +158,7 @@ def multiinsert(conn, cur, sql, args):
     print("Insert execute time ", end - start, "second")
 
 def get_source_conn():
-    #s_conn = pymysql.connect(host='localhost', port=3306, user='root', passwd='7taw996d', db='testdb', charset='utf8',compress=None)
+    #s_conn = pymysql.connect(host='localhost', port=3306, user='root', passwd='7t96d', db='testdb', charset='utf8',compress=None)
     s_conn = pymysql.connect(host='fatgame-slave-003.cpvuvttgymsf.ap-northeast-1.rds.amazonaws.com', port=3306,
                              user='readonly_fatgame', passwd='fK72Od/yFhYprwt@i8zQV:43', db='fatgame', charset='utf8', compress=None)
     #s_conn = pymysql.connect(host='fatpit-for-dump.cpvuvttgymsf.ap-northeast-1.rds.amazonaws.com', port=3306, user='fatpit_pro', passwd='vup2u/3yj04', db='fatpit_pro', charset='utf8',compress=None)
@@ -290,9 +290,9 @@ def mysqlvariables(cur):
             print(Fore.RED + "set GLOBAL %s = %s ;  ### NO Good variables %s" % (x[0], x[1], results[0][1]) + Style.RESET_ALL)
 
 def Mvariables():
-    hostip = (('CKDocker','localhost','root','7taw996d','testdb'),
+    hostip = (('CKDocker','localhost','root',6d','testdb'),
               ('fatpitProduction', 'fatpit-st-001.cpvuvttgymsf.ap-northeast-1.rds.amazonaws.com', 'fatpit_pro','vup2u/3yj04', 'fatpit_pro'),
-              ('CKAWSRDSLAB', 'jvdckrdsa.ckht8fbw26hy.ap-northeast-1.rds.amazonaws.com', 'admin', '7taw996d', 'fatpit_staging'),
+              ('CKAWSRDSLAB', 'jvdckrdsa.ckht8fbw26hy.ap-northeast-1.rds.amazonaws.com', 'admin', '7d', 'fatpit_staging'),
               ('fatpit_DEV', 'fatpit-staging-001.1a2b333.com', 'fatpit_staging', 'vup2u/3yj04', 'fatpit_staging'),
               ('fatpit_Staging', 'fatpit-demo.1a2b333.com', 'fatpit_staging', 'vup2u/3yj04', 'fatpit_staging'),
               ('fatpitdump','fatpit-for-dump.cpvuvttgymsf.ap-northeast-1.rds.amazonaws.com','fatpit_pro','vup2u/3yj04','fatpit_pro'),
