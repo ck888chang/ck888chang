@@ -1,0 +1,298 @@
+Mariadb筆記
+
+
+docker exec -it devnew-mariadb-10.8.8  mysql -u root -p
+docker exec -it testnew-mariadb-10.8.8 mysql -u root -p
+
+
+
+
+SELECT id FROM `xxl_job_log`
+                WHERE !(
+                        (trigger_code in (0, 200) and handle_code = 0)
+                        OR
+                        (handle_code = 200)
+                )
+                AND `alarm_status` = 0
+                ORDER BY id ASC
+                LIMIT 1000;
+
+
+
+
+#### 本地docker mariadb最後上線語句
+docker run -d -p 3307:3306 -v /Users/ck/mysql/mysql_data_dev2:/var/lib/mysql \
+    -v /Users/ck/mysql/mysql_dev_slow2:/var/log/mysql/ \
+    -v /Users/ck/mysql/mysql_dev_config/my.cnf:/etc/mysql/my.cnf \
+    --name ckdev-mariadb-10.6.16 -e MYSQL_ROOT_PASSWORD=xxx mariadbdev:latest
+
+### 進shell
+docker exec -it ckdev-mariadb-10.6.16 /bin/bash
+### 直接進mysql
+docker exec -it ckdev-mariadb-10.6.16  mysql -u root -pxxxxx
+
+
+######使用mariabackup 全備份
+mariabackup --user=<username> --password=<password> --backup --target-dir=/path/to/backup
+mariabackup -uroot -pckdev --backup --target-dir=/var/lib/mysql/backupa
+mariabackup -uroot -pxxxxx --backup --target-dir=/var/lib/mysql/backupb --parallel=4 --compress
+
+######使用mariabackup 增量備份
+mariabackup --user=<username> --password=<password> --backup --incremental-basedir=/path/to/full --target-dir=/path/to/incremental --parallel=4 --compress
+mariabackup -uroot -pxxxxx --backup --incremental-basedir=/var/lib/mysql/backup --target-dir=/var/lib/mysql/incremental$(date +%Y%m%d%H%M) --parallel=4 --compress
+目標目錄target需要一直換名字不能重覆，如 incremental加上年月日時分秒
+--target-dir=/var/lib/mysql/incremental$(date +%Y%m%d%H%M%S)
+
+#todo:做一個整合版的mariadb compose自動化腳本
+#todo:做全備份，增量備份，還原腳本 (結合上面的mariadb compose的腳本)
+
+/usr/local/mysql/bin/mysql -u root -p xxxxxxx
+
+
+/usr/local/mysql/bin/mysql -u root -p xxxxxxx
+
+/usr/local/mysql/bin/mysql -h 127.0.0.1 -P 3307 -u root -p
+xxxxxx
+/usr/local/mysql/bin/mysql -h 127.0.0.1 -P 3308 -u root -p
+xxxxxxx
+
+#### 新增一個範例資料庫
+/usr/local/mysql/bin/mysql -h 127.0.0.1 -P 3307 -u root -p < /Users/ck/Downloads/mysqlsampledatabase.sql
+
+/usr/local/mysql/bin/mysqldump -h 127.0.0.1 -P 3307 -u root -p classicmodels --add-drop-database > classicmodels.sql
+/usr/local/mysql/bin/mysqldump -h 127.0.0.1 -P 3307 -u root -p classicmodels > classicmodels.sql
+/usr/local/mysql/bin/mysql -h 127.0.0.1 -P 3308 -u root -p classicmodels < classicmodels.sql
+
+### 備份、還原 全部資料庫
+/usr/local/mysql/bin/mysqldump -h 127.0.0.1 -P 3307 -u root -p --all-databases --skip-lock-tables > classicmodels.sql
+/usr/local/mysql/bin/mysql -h 127.0.0.1 -P 3308 -u root -p --skip-lock-tables < classicmodels.sql
+
+
+
+docker exec  -it ckdev-mariadb-10.8.8 /bin/bash
+docker exec  -it 2ckdev-mariadb-10.6.16 /bin/bash
+
+/usr/local/mysql/bin/mysql -h 127.0.0.1 -P 3307 -u root -p
+
+
+/usr/local/mysql/bin/mysqldump -h 127.0.0.1 -u root -P 3307 -p classicmodels  > classicmodels.sql
+/usr/local/mysql/bin/mysql -h 127.0.0.1 -u root -P 3308 -p
+CREATE DATABASE  IF NOT EXISTS classicmodels;
+/usr/local/mysql/bin/mysql -h 127.0.0.1 -u root -P 3308 -p classicmodels < classicmodels.sql
+
+
+
+show database;
+use mysql;
+select host,user,password from user;
+CREATE USER 'ck'@'127.0.0.1' IDENTIFIED BY 'zxzxxxxO'; flush privileges;
+
+#### backup all databases
+mysqldump --all-databases > my_backup.sql
+
+
+
+### restore all
+mysql -u root -p < alldatabases.sql
+
+#### 範例：備份一個資料庫 ，還原一個資料庫
+mysqldump --host=dbfmylast --user=root --port=3306 -p sakila  > backup_working_hours_table.sql
+mysql --host=dbfmylast --user=root --port=3306 -p sakila < backup_working_hours_table.sql
+
+
+
+
+
+CREATE USER 'goplaytest'@'localhost' IDENTIFIED BY 'xxxxxxxNU';
+CREATE USER 'goplaytest'@'18.166.29.157' IDENTIFIED BY 'gbxxxxxxxxxx';
+GRANT SELECT ON goplay_games.* TO 'goplaytest'@'18.166.29.157';
+GRANT SELECT ON goplay_games.* TO 'goplaytest'@'localhost';
+FLUSH PRIVILEGES;
+
+
+
+
+
+##### thread
+show variables like '%Threads%';
+show status where variable_name like '%Threads%';
+
+
+
+###### slow query log logrotate
+mysql> show variables like '%slow_query%';
++---------------------+-----------------------------------+
+| Variable_name       | Value                             |
++---------------------+-----------------------------------+
+| slow_query_log      | ON                                |
+| slow_query_log_file | /var/lib/mysql/localhost-slow.log |
++---------------------+-----------------------------------+
+
+mysql> set global slow_query_log=off;
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> flush slow logs;
+Query OK, 0 rows affected (0.00 sec)
+
+[root@localhost ~]# mv /var/log/mysql/mariadb-slow.log /var/log/mysql/mariadb-slow$(date +%Y-%m-%d).log
+
+mysql>
+mysql> set global slow_query_log=on;
+Query OK, 0 rows affected (0.00 sec)
+
+SHOW GLOBAL STATUS like '%buffer%';
+SHOW GLOBAL STATUS like '%wait%';
+
+
+mysql> SHOW GLOBAL STATUS like '%sort%';
++---------------------------+--------+
+| Variable_name             | Value  |
++---------------------------+--------+
+| Sort_merge_passes         | 0      |
+| Sort_priority_queue_sorts | 1409   |
+| Sort_range                | 0      |
+| Sort_rows                 | 843479 |
+| Sort_scan                 | 13053  |
++---------------------------+--------+
+
+作者：腾讯云开发者
+链接：https://juejin.cn/post/6844903766039216142
+来源：稀土掘金
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+
+
+
+
+
+
+
+
+############### my.cnf ( production ) config file
+[mariadb]
+innodb_buffer_pool_size=8G
+innodb_io_capacity_max=16000
+innodb_io_capacity=4000
+innodb_read_io_threads=32
+innodb_write_io_threads=16
+innodb_log_buffer_size=16M
+innodb_log_file_size=1G
+innodb_log_files_in_group=2
+innodb_undo_log_truncate=ON
+innodb_max_undo_log_size=128M
+innodb_purge_rseg_truncate_frequency=64
+innodb_sort_buffer_size=8M
+aria_sort_buffer_size=32M
+net_buffer_length=512K
+tmp_table_size=32M
+max_heap_table_size=32M
+read_buffer_size=512K
+read_rnd_buffer_size=1M
+sort_buffer_size=4M
+join_buffer_size=2M
+bulk_insert_buffer_size=8M
+max_seeks_for_key=1000
+thread_cache_size=200
+wait_timeout=1800
+interactive_timeout=1800
+binlog_cache_size=256K
+
+
+
+
+############### my.cnf ( dev and test ) config file
+[mariadb]
+innodb_buffer_pool_size=1G
+innodb_io_capacity_max=4000
+innodb_io_capacity=500
+innodb_read_io_threads=8
+innodb_write_io_threads=8
+innodb_log_buffer_size=4M
+innodb_log_file_size=64M
+innodb_log_files_in_group=2
+innodb_undo_log_truncate=ON
+innodb_max_undo_log_size=64M
+innodb_purge_rseg_truncate_frequency=16
+innodb_sort_buffer_size=2M
+aria_sort_buffer_size=16M
+net_buffer_length=128K
+tmp_table_size=16M
+max_heap_table_size=16M
+read_buffer_size=256K
+read_rnd_buffer_size=512K
+sort_buffer_size=2M
+join_buffer_size=1M
+bulk_insert_buffer_size=8M
+max_seeks_for_key=1000
+thread_cache_size=150
+wait_timeout=1800
+interactive_timeout=1800
+binlog_cache_size=64K
+
+
+
+
+
+
+
+############### my.cnf config file
+[mariadb]
+innodb_buffer_pool_size=2G
+innodb_io_capacity_max=4000
+innodb_io_capacity=500
+innodb_read_io_threads=8
+innodb_write_io_threads=8
+innodb_log_buffer_size=16M
+innodb_log_file_size=1G
+innodb_log_files_in_group=2
+innodb_undo_log_truncate=ON
+innodb_max_undo_log_size=2G
+innodb_purge_rseg_truncate_frequency=64
+innodb_sort_buffer_size=4M
+aria_sort_buffer_size=256M
+net_buffer_length=512K
+tmp_table_size=128M
+max_heap_table_size=128M
+read_buffer_size=1M
+read_rnd_buffer_size=2M
+sort_buffer_size=1M
+join_buffer_size=512K
+bulk_insert_buffer_size=8M
+max_seeks_for_key=1000
+thread_cache_size=150
+wait_timeout=180
+interactive_timeout=180
+binlog_cache_size=512K
+
+
+
+
+
+######## example
+innodb_buffer_pool_size=2G~64G 70% of memory
+innodb_io_capacity_max',4000,16000
+innodb_io_capacity',500,8000
+innodb_read_io_threads',8,64
+innodb_write_io_threads',8,32
+innodb_log_buffer_size',16777216,134217728
+innodb_flush_log_at_trx_commit',2,2
+innodb_flush_log_at_timeout',2,5
+innodb_sort_buffer_size',67108864,67108864  (64K ~1M ~64M)
+innodb_autoextend_increment',128,128
+innodb_log_file_size',268435456,536870912
+net_buffer_length',524288,1048576
+tmp_table_size',134217728,268435456
+max_heap_table_size',134217728,268435456
+read_buffer_size',1048576,16777216
+read_rnd_buffer_size',2097152,16777216
+sort_buffer_size',16777216,2147483648
+join_buffer_size',524288,16777216
+bulk_insert_buffer_size',8388608,16777216
+max_seeks_for_key',1000,1000
+thread_cache_size',60,400
+wait_timeout',180,3600
+interactive_timeout',180,3600
+binlog_cache_size',524288,5242880
+sync_binlog',2,5
+
+
+
