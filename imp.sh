@@ -1,4 +1,4 @@
-uuuuh#!/bin/bash
+#!/bin/bash
 
 # MySQL 連線設定
 DB_USER="your_mysql_user"
