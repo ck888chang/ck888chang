@@ -30,3 +30,22 @@ for FILE in $(ls $EXPORT_DIR/*.sql.gz | sort); do
 done
 
 echo "所有匯入完成！"
+
+
+
+
+#!/bin/bash
+
+# MySQL 連線設定
+DB_USER="your_mysql_user"
+DB_PASSWORD="your_mysql_password"
+DB_NAME="your_database_name"
+IMPORT_DIR="./exports"
+
+for file in $IMPORT_DIR/*.sql.gz; do
+    echo "匯入文件：$file"
+    gunzip -c "$file" | mysql -u $DB_USER -p$DB_PASSWORD --default-character-set=utf8mb4 $DB_NAME
+done
+
+echo "匯入完成！"
+
