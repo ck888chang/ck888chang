@@ -1,4 +1,5 @@
 
+
 #!/bin/bash
 
 # MySQL 連線設定
@@ -128,3 +129,11 @@ while [[ "$CURRENT_DATE" != $(date -I -d "$END_DATE + 1 day") ]]; do
 done
 
 echo "匯出並壓縮完成！"
+
+
+# 匯出時加上字符集
+mysqldump -u $DB_USER -p$DB_PASSWORD --default-character-set=utf8mb4 ...
+
+# 匯入時加上字符集
+mysql -u $DB_USER -p$DB_PASSWORD --default-character-set=utf8mb4 ...
+
